@@ -1,0 +1,23 @@
+package model
+
+import "time"
+
+// Status {{.Type}} (varchar + konstanta Go, bukan ENUM native — seragam lintas dialek).
+const (
+	{{.Type}}Active   = "Active"
+	{{.Type}}Inactive = "Inactive"
+)
+
+// {{.Type}} adalah entity modul {{.Module}}.
+type {{.Type}} struct {
+	ID        string    `gorm:"type:varchar(36);primaryKey" json:"id"`
+	Code      string    `gorm:"type:varchar(20);uniqueIndex" json:"code"`
+	Name      string    `gorm:"type:varchar(100);uniqueIndex" json:"name"`
+	Status    string    `gorm:"type:varchar(20);default:Active;index" json:"status"`
+	CreatedBy string    `gorm:"type:varchar(36)" json:"created_by"`
+	UpdatedBy string    `gorm:"type:varchar(36)" json:"updated_by"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func ({{.Type}}) TableName() string { return "{{.Table}}" }

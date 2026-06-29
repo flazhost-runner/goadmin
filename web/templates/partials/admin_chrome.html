@@ -1,0 +1,218 @@
+{{/*
+  Chrome admin GoAdmin — meniru NodeAdmin (Tailwind themeable, gaya eks-SB-Admin-2).
+  Dipakai: {{define "<modul>/<view>"}}{{template "admin/head" .}} …isi… {{template "admin/foot" .}}{{end}}
+  Locals: .title .active .currentUser .setting .theme .themeName .themes ._csrf .flash_*
+*/}}
+
+{{define "admin/head"}}<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{{.title}} — {{if .setting}}{{.setting.Name}}{{else}}GoAdmin{{end}}</title>
+  {{if ._csrf}}<meta name="csrf-token" content="{{._csrf}}">{{end}}
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: {
+      primary: '{{.theme.Primary}}', secondary: '{{.theme.Secondary}}',
+      'theme-light': '{{.theme.Light}}', 'theme-dark': '{{.theme.Dark}}'
+    }}}}
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer components {
+      .form-control { @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:border-transparent; }
+      .form-control:focus { --tw-ring-color: var(--primary); }
+      .form-control.is-invalid { @apply border-red-500 focus:ring-red-400; }
+      select.form-control { @apply bg-white; } textarea.form-control { @apply min-h-[90px]; }
+      .form-label { @apply block mb-1 text-sm text-gray-700; }
+      .invalid-feedback { @apply block mt-1 text-sm text-red-600; }
+      .btn { @apply inline-flex items-center justify-center gap-1 rounded-lg px-4 py-2 text-sm font-medium cursor-pointer transition-colors border-0 no-underline; }
+      .btn-sm { @apply px-3 py-1.5 text-xs; }
+      .btn-primary, .btn-primary-tw { background: var(--primary); @apply text-white; }
+      .btn-primary:hover, .btn-primary-tw:hover { background: var(--theme-dark); @apply text-white; }
+      .btn-success { @apply bg-green-600 text-white hover:bg-green-700; } .btn-danger { @apply bg-red-600 text-white hover:bg-red-700; } .btn-info { @apply bg-cyan-500 text-white hover:bg-cyan-600; }
+      .btn-secondary { @apply bg-gray-200 text-gray-800 hover:bg-gray-300; }
+      .btn-outline-dark { @apply border border-gray-800 text-gray-800 bg-white hover:bg-gray-800 hover:text-white; }
+      .btn-group { @apply relative inline-flex gap-2; }
+      .table { @apply w-full text-sm text-gray-700; }
+      .table thead th { @apply py-3 px-4 text-left font-medium text-gray-600 border-b border-gray-200 bg-gray-50; }
+      .table tbody td { @apply py-3 px-4 align-middle border-b border-gray-100; }
+      .table tbody tr:hover { @apply bg-gray-50 transition-colors; }
+      .table-bordered, .table-hover { }
+      .alert { @apply rounded-lg px-4 py-3 mb-4 text-sm border; }
+      .alert-danger { @apply bg-red-50 text-red-700 border-red-200; } .alert-success { @apply bg-green-50 text-green-700 border-green-200; }
+      .alert-info { @apply bg-blue-50 text-blue-700 border-blue-200; } .alert-warning { @apply bg-yellow-50 text-yellow-800 border-yellow-200; }
+      .alert-primary { background: var(--theme-light); color: var(--theme-dark); border-color: var(--primary); }
+      .badge { @apply inline-flex items-center px-2 py-1 rounded text-xs font-medium leading-none; }
+      .text-bg-primary { background: var(--primary); @apply text-white; }
+      .pagination { @apply inline-flex items-center gap-1; } .page-item { @apply list-none; }
+      .page-link { @apply inline-block px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 no-underline hover:bg-gray-50; }
+      .page-item.active .page-link { background: var(--primary); @apply text-white border-transparent; }
+      .page-item.disabled .page-link { @apply text-gray-300; }
+      .dropdown { @apply relative inline-block; }
+      .dropdown-toggle::after { content:""; display:inline-block; width:.4em; height:.4em; margin-left:.3em; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:rotate(45deg) translateY(-1px); }
+      .dropdown-item { @apply flex items-center gap-2 px-4 py-2 text-sm text-gray-700 no-underline cursor-pointer; }
+      .dropdown-item:hover { background: var(--theme-light); color: var(--theme-dark); } .dropdown-item.danger:hover { @apply bg-red-50 text-red-600; }
+      .dropdown-divider { @apply my-1 border-t border-gray-100; }
+      .nav-link-tw { color: rgba(255,255,255,.85); @apply flex items-center gap-3 px-4 py-3 rounded-lg font-medium; transition: background .15s, color .15s; }
+      .nav-link-tw:hover { background: rgba(255,255,255,.12); color:#fff; }
+      .nav-link-tw.active { background: var(--primary); color:#fff; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+      .tw-card { @apply bg-white rounded-2xl; box-shadow: 0 10px 25px -5px rgba(0,0,0,.08), 0 8px 10px -6px rgba(0,0,0,.05); }
+      .hover-scale { transition: transform .2s; } .hover-scale:hover { transform: translateY(-3px); }
+    }
+    :root { --primary: {{.theme.Primary}}; --secondary: {{.theme.Secondary}}; --theme-light: {{.theme.Light}}; --theme-dark: {{.theme.Dark}}; }
+    body { background: linear-gradient(135deg, var(--theme-light) 0%, #f8fafc 100%); }
+    .sidebar-gradient { background: var(--theme-dark); } #tw-sidebar a { text-decoration:none; color:#fff; }
+    .dropdown-menu { position:absolute; right:0; top:100%; margin-top:.5rem; min-width:11rem; background:#fff; border-radius:.75rem; border:1px solid #f1f5f9; padding:.375rem 0; box-shadow:0 12px 28px -8px rgba(0,0,0,.18); opacity:0; visibility:hidden; transform:translateY(-4px); transition:.15s; z-index:50; }
+    .dropdown-menu.show { opacity:1; visibility:visible; transform:none; }
+    /* shim utility nama-Bootstrap di markup */
+    .d-flex{display:flex} .d-block{display:block} .d-none{display:none} .d-inline-block{display:inline-block}
+    .align-items-center{align-items:center} .align-items-end{align-items:flex-end} .align-middle{vertical-align:middle}
+    .justify-content-center{justify-content:center} .justify-content-between{justify-content:space-between} .justify-content-end{justify-content:flex-end}
+    .flex-wrap{flex-wrap:wrap} .fw-semibold{font-weight:600} .fw-bold{font-weight:700}
+    .w-100{width:100%} .mx-auto{margin-left:auto;margin-right:auto} .me-1{margin-right:.25rem} .me-2{margin-right:.5rem} .ms-2{margin-left:.5rem} .mt-2{margin-top:.5rem} .mt-4{margin-top:1rem} .mt-5{margin-top:1.5rem} .mb-3{margin-bottom:.75rem} .mb-4{margin-bottom:1rem}
+    .gap-2{gap:.5rem} .gap-3{gap:.75rem} .text-muted{color:#6b7280} .text-danger{color:#dc2626} .small{font-size:.8rem} .text-center{text-align:center} .text-left{text-align:left}
+    /* modal & toast */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;visibility:hidden;transition:.2s}
+    .modal-overlay.show{opacity:1;visibility:visible} .modal-box{background:#fff;border-radius:1rem;width:100%;max-width:28rem;box-shadow:0 20px 50px -12px rgba(0,0,0,.35);transform:translateY(8px) scale(.97);transition:.2s} .modal-overlay.show .modal-box{transform:none}
+    .modal-header{padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9;font-weight:700;color:var(--theme-dark);display:flex;align-items:center;justify-content:space-between} .modal-body{padding:1.25rem;color:#374151} .modal-footer{padding:1rem 1.25rem;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;gap:.5rem}
+    .toast-container{position:fixed;top:1rem;right:1rem;z-index:70;display:flex;flex-direction:column;gap:.5rem}
+    .toast{min-width:16rem;background:#fff;border-radius:.75rem;padding:.75rem 1rem;box-shadow:0 10px 25px -5px rgba(0,0,0,.18);border-left:4px solid var(--primary);font-size:.9rem;transform:translateX(120%);transition:.25s;opacity:0}
+    .toast.show{transform:none;opacity:1} .toast.success{border-left-color:#16a34a} .toast.error{border-left-color:#dc2626}
+  </style>
+
+  <link href="/assets/be/default/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- jQuery (dependensi Trumbowyg + select-all tabel) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- Trumbowyg (rich text editor untuk .trumbowyg-editor) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.21.0/ui/trumbowyg.min.css" integrity="sha512-XjpikIIW1P7jUS8ZWIznGs9KHujZQxhbnEsqMVQ5GBTTRmmJe32+ULipOxFePB8F8j9ahKmCjyJJ22VNEX60yg==" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.21.0/trumbowyg.min.js" integrity="sha512-l6MMck8/SpFCgbJnIEfVsWQ8MaNK/n2ppTiELW3I2BFY5pAm/WjkNHSt+2OD7+CZtygs+jr+dAgzNdjNuCU7kw==" crossorigin="anonymous"></script>
+  <!-- Plugin file manager: tombol toolbar upload/list/hapus gambar editor ke /admin/v1/media -->
+  <script src="/assets/vendor/trumbowyg/filemanager.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body id="page-top" class="min-h-screen text-gray-800">
+{{template "admin/sidebar" .}}
+<div class="md:ml-64 min-h-screen flex flex-col">
+  <div class="px-4 md:px-6 pt-4">{{template "admin/topbar" .}}</div>
+  <main class="flex-1 px-4 md:px-6 pb-10">{{end}}
+
+{{define "admin/foot"}}</main>
+  <footer class="px-6 py-4 text-center text-xs text-gray-400">{{if .setting}}{{.setting.Copyright}}{{end}}</footer>
+</div>
+<div class="toast-container" id="tw-toasts"></div>
+<div class="modal-overlay" id="tw-modal"><div class="modal-box"><div class="modal-header"><span id="tw-modal-title"></span><button class="modal-close" onclick="Modal.close()" style="border:0;background:none;cursor:pointer;color:#9ca3af;font-size:1.1rem">&times;</button></div><div class="modal-body" id="tw-modal-body"></div><div class="modal-footer" id="tw-modal-footer"></div></div></div>
+<script>
+  function Toast(msg, type){ var c=document.getElementById('tw-toasts'); var t=document.createElement('div'); t.className='toast '+(type||'info'); t.textContent=msg; c.appendChild(t); requestAnimationFrame(function(){t.classList.add('show')}); setTimeout(function(){t.classList.remove('show'); setTimeout(function(){t.remove()},250)},3500); }
+  var Modal={ open:function(o){ o=o||{}; document.getElementById('tw-modal-title').textContent=o.title||''; document.getElementById('tw-modal-body').innerHTML=o.body||''; document.getElementById('tw-modal-footer').innerHTML=o.footer||'<button class="btn btn-secondary btn-sm" onclick="Modal.close()">Tutup</button>'; document.getElementById('tw-modal').classList.add('show'); }, close:function(){ document.getElementById('tw-modal').classList.remove('show'); } };
+  document.getElementById('tw-modal').addEventListener('click', function(e){ if(e.target===this) Modal.close(); });
+  function confirmDialog(msg){ return new Promise(function(res){ Modal.open({ title:'Konfirmasi', body:'<p>'+msg+'</p>', footer:'<button class="btn btn-secondary btn-sm" id="cf-no">Batal</button><button class="btn btn-danger btn-sm" id="cf-yes">Ya</button>' }); document.getElementById('cf-yes').onclick=function(){ Modal.close(); res(true); }; document.getElementById('cf-no').onclick=function(){ Modal.close(); res(false); }; }); }
+  // Dropdown toggle
+  document.addEventListener('click', function(e){
+    var tog=e.target.closest('[data-toggle-dd]');
+    document.querySelectorAll('.dropdown-menu.show').forEach(function(m){ if(!tog || m!==tog.parentElement.querySelector('.dropdown-menu')) m.classList.remove('show'); });
+    if(tog){ e.preventDefault(); tog.parentElement.querySelector('.dropdown-menu').classList.toggle('show'); }
+  });
+  // data-confirm pada FORM hapus (submit) — DELETE lewat POST + ?_method=DELETE, gaya NodeAdmin
+  document.addEventListener('submit', function(e){ var f=e.target.closest('[data-confirm]'); if(f){ e.preventDefault(); confirmDialog(f.getAttribute('data-confirm')).then(function(ok){ if(ok) f.submit(); }); } }, true);
+  // data-confirm pada LINK (mis. aksi GET ber-konfirmasi) — konfirmasi lalu navigasi
+  document.addEventListener('click', function(e){ var a=e.target.closest('a[data-confirm]'); if(a){ e.preventDefault(); confirmDialog(a.getAttribute('data-confirm')).then(function(ok){ if(ok) window.location.href=a.getAttribute('href'); }); } }, true);
+  // Sidebar toggle (mobile)
+  var sb=document.getElementById('tw-sidebar'), ov=document.getElementById('tw-sidebar-overlay');
+  function sbToggle(show){ if(!sb)return; sb.classList.toggle('-translate-x-full', !show); if(ov) ov.classList.toggle('hidden', !show); }
+  var btn=document.getElementById('tw-sidebar-toggle'); if(btn) btn.addEventListener('click', function(){ sbToggle(sb.classList.contains('-translate-x-full')); });
+  if(ov) ov.addEventListener('click', function(){ sbToggle(false); });
+  // Rich text editor: aktifkan pada textarea.trumbowyg-editor (sinkron HTML → textarea saat submit).
+  if (window.jQuery && jQuery.fn.trumbowyg) {
+    jQuery('.trumbowyg').trumbowyg();
+    jQuery('.trumbowyg-editor').trumbowyg({
+      btns: [['viewHTML'],['formatting'],['strong','em','del'],['superscript','subscript'],['link'],['filemanager'],['justifyLeft','justifyCenter','justifyRight','justifyFull'],['unorderedList','orderedList'],['horizontalRule'],['removeformat'],['fullscreen']],
+      semantic: { div: 'div' }, autogrow: true, removeformatPasted: true,
+      plugins: { filemanager: true }
+    });
+    jQuery('form').on('submit', function(){
+      jQuery(this).find('.trumbowyg, .trumbowyg-editor').each(function(){ if (jQuery(this).data('trumbowyg')) jQuery(this).val(jQuery(this).trumbowyg('html')); });
+    });
+  }
+  // Fallback gambar gagal/ kosong load → placeholder ikon (fa-image/fa-user)
+  // ukuran mengikuti dimensi gambar — replika foot.ejs NodeAdmin (img selalu
+  // dirender; src kosong/rusak → kotak placeholder, bukan area kosong).
+  (function(){
+    function placeholder(img){
+      if (img.dataset.imgFallback) return; img.dataset.imgFallback='1';
+      var cls=(img.className||'')+' '+(img.getAttribute('alt')||'');
+      // Ikon: orang utk konteks avatar; gambar utk lainnya.
+      var isAvatar=/img-profile|picture|avatar|user/i.test(cls);
+      // BENTUK bulat HANYA bila kelas memang bulat (rounded-full/circle) — bukan
+      // sekadar konteks avatar. Jadi foto profil (class "rounded") = kotak rounded,
+      // avatar topbar (class "rounded-full") tetap bulat. (Sejajar NodeAdmin.)
+      var isCircle=/rounded-full|rounded-circle|img-profile/i.test(cls);
+      var icon=isAvatar?'fa-user':'fa-image';
+      var w=img.getAttribute('width')||img.offsetWidth||40, h=img.getAttribute('height')||img.offsetHeight||40;
+      var box=document.createElement('span'); box.className='img-placeholder '+(img.className||'');
+      box.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:'+w+'px;height:'+h+'px;background:#f1f5f9;color:#94a3b8;'+(isCircle?'border-radius:9999px;':'border-radius:.5rem;');
+      box.innerHTML='<i class="fas '+icon+'" style="font-size:'+Math.max(14,Math.min(w,h)*0.45)+'px"></i>';
+      if (img.parentNode) img.parentNode.replaceChild(box, img);
+    }
+    document.addEventListener('error', function(e){ var t=e.target; if (t && t.tagName==='IMG') placeholder(t); }, true);
+    document.querySelectorAll('img').forEach(function(img){ if (!img.getAttribute('src') || (img.complete && img.naturalWidth===0)) placeholder(img); });
+  })();
+</script>
+{{if .flash_success}}<script>Toast({{.flash_success}}, 'success');</script>{{end}}
+{{if .flash_error}}<script>Toast({{.flash_error}}, 'error');</script>{{end}}
+</body>
+</html>{{end}}
+
+{{define "admin/sidebar"}}<aside id="tw-sidebar" class="sidebar-gradient text-white w-64 min-h-screen fixed top-0 left-0 z-40 -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col">
+  <a href="/admin/v1/dashboard" class="flex items-center gap-3 px-6 py-5 border-b border-white/10">
+    <div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center overflow-hidden shrink-0">
+      {{if .setting}}{{if .setting.Logo}}<img src="{{.setting.Logo}}" alt="logo" class="w-full h-full object-contain p-1">{{else}}<i class="fas fa-chart-line text-xl"></i>{{end}}{{else}}<i class="fas fa-chart-line text-xl"></i>{{end}}
+    </div>
+    <span class="text-lg font-bold truncate">{{if .setting}}{{.setting.Name}}{{else}}Admin Panel{{end}}</span>
+  </a>
+  <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+    <a href="/admin/v1/dashboard" class="nav-link-tw{{if eq .active "dashboard"}} active{{end}}"><i class="fas fa-tachometer-alt w-5 text-center"></i><span>Dashboard</span></a>
+    {{if hasAccess .currentUser "admin.v1.components.index" "GET"}}<a href="/admin/v1/components" class="nav-link-tw{{if eq .active "components"}} active{{end}}"><i class="fas fa-cubes w-5 text-center"></i><span>UI Components</span></a>{{end}}
+    {{if or (hasAccess .currentUser "admin.v1.access.permission.index" "GET") (hasAccess .currentUser "admin.v1.access.role.index" "GET") (hasAccess .currentUser "admin.v1.access.user.index" "GET") (hasAccess .currentUser "admin.v1.setting.index" "GET")}}
+    <p class="px-4 pt-5 pb-2 text-xs uppercase tracking-wider text-white/70 font-bold">Maintenance</p>
+    {{if hasAccess .currentUser "admin.v1.access.permission.index" "GET"}}<a href="/admin/v1/access/permission" class="nav-link-tw{{if eq .active "permission"}} active{{end}}"><i class="fas fa-key w-5 text-center"></i><span>Permission</span></a>{{end}}
+    {{if hasAccess .currentUser "admin.v1.access.role.index" "GET"}}<a href="/admin/v1/access/role" class="nav-link-tw{{if eq .active "role"}} active{{end}}"><i class="fas fa-user-shield w-5 text-center"></i><span>Role</span></a>{{end}}
+    {{if hasAccess .currentUser "admin.v1.access.user.index" "GET"}}<a href="/admin/v1/access/user" class="nav-link-tw{{if eq .active "user"}} active{{end}}"><i class="fas fa-users w-5 text-center"></i><span>User</span></a>{{end}}
+    {{if hasAccess .currentUser "admin.v1.setting.index" "GET"}}<a href="/admin/v1/setting" class="nav-link-tw{{if eq .active "setting"}} active{{end}}"><i class="fas fa-cog w-5 text-center"></i><span>Setting</span></a>{{end}}
+    {{end}}
+  </nav>
+  <div class="px-6 py-4 text-xs text-white/40 border-t border-white/10">{{if .setting}}{{.setting.Copyright}}{{end}}</div>
+</aside>
+<div id="tw-sidebar-overlay" class="fixed inset-0 bg-black/40 z-30 hidden md:hidden"></div>{{end}}
+
+{{define "admin/topbar"}}<header class="tw-card rounded-none md:rounded-xl bg-white px-4 md:px-6 py-3 mb-6 flex items-center justify-between sticky top-0 z-20">
+  <div class="flex items-center gap-3">
+    <button id="tw-sidebar-toggle" class="md:hidden text-2xl" style="color:var(--primary)" aria-label="Menu"><i class="fas fa-bars"></i></button>
+    <a href="/admin/v1/dashboard" class="text-xl" style="color:var(--primary)"><i class="fas fa-home"></i></a>
+  </div>
+  <div class="dropdown">
+    <a class="flex items-center gap-2 no-underline cursor-pointer" href="#" data-toggle-dd>
+      {{if .currentUser}}<span class="hidden lg:inline text-gray-500">Welcome, {{.currentUser.Name}}</span>
+      {{if .currentUser.Picture}}<img class="rounded-full" style="width:38px;height:38px;object-fit:cover" src="{{.currentUser.Picture}}">{{else}}<span class="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-500"><i class="fas fa-user"></i></span>{{end}}{{end}}
+      <i class="bi bi-gear" style="color:var(--primary)"></i>
+    </a>
+    <div class="dropdown-menu">
+      <a class="dropdown-item" href="/admin/v1/profile"><i class="fas fa-user fa-fw"></i> Profile</a>
+      <div class="dropdown-divider"></div>
+      <!-- Logout = POST (CSRF-safe, persis NodeAdmin) via form tersembunyi -->
+      <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fas fa-sign-out-alt fa-fw"></i> Logout</a>
+      <form id="logout-form" action="/auth/logout" method="post" class="hidden"><input type="hidden" name="_csrf" value="{{._csrf}}"></form>
+    </div>
+  </div>
+</header>{{end}}
+
+{{define "admin/pagination"}}{{if gt .meta.LastPage 1}}<div class="d-flex justify-content-end mt-4">
+  <nav><ul class="pagination">
+    {{if gt .meta.CurrentPage 1}}<li class="page-item"><a class="page-link" href="{{pageURL .qbase (sub .meta.CurrentPage 1)}}">Previous</a></li>{{end}}
+    {{range $p := seq 1 .meta.LastPage}}<li class="page-item {{if eq $p $.meta.CurrentPage}}active{{end}}"><a class="page-link" href="{{pageURL $.qbase $p}}">{{$p}}</a></li>{{end}}
+    {{if lt .meta.CurrentPage .meta.LastPage}}<li class="page-item"><a class="page-link" href="{{pageURL .qbase (add .meta.CurrentPage 1)}}">Next</a></li>{{end}}
+  </ul></nav>
+</div>{{end}}{{end}}

@@ -1,0 +1,22 @@
+// Package dto berisi input tervalidasi modul {{.Module}} (whitelist field →
+// anti mass-assignment). Validasi via tag go-playground/validator.
+package dto
+
+// Create{{.Type}}Input = payload buat {{.Module}} baru.
+type Create{{.Type}}Input struct {
+	Name   string `json:"name" form:"name" binding:"required,max=100"`
+	Status string `json:"status" form:"status" binding:"omitempty,oneof=Active Inactive"`
+}
+
+// Update{{.Type}}Input = payload ubah {{.Module}}.
+type Update{{.Type}}Input struct {
+	Name   string `json:"name" form:"name" binding:"required,max=100"`
+	Status string `json:"status" form:"status" binding:"omitempty,oneof=Active Inactive"`
+}
+
+// ListQuery = parameter list (paginasi + search).
+type ListQuery struct {
+	Page    int    `form:"page"`
+	PerPage int    `form:"per_page"`
+	Search  string `form:"search"`
+}

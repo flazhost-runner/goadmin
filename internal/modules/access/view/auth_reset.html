@@ -1,0 +1,20 @@
+{{define "auth/reset"}}{{template "auth/head" .}}
+<div class="w-full max-w-sm tw-card p-8">
+  <div class="mb-6 text-center">
+    {{if .setting}}{{if .setting.Logo}}<img class="h-12 mx-auto object-contain mb-3" src="{{.setting.Logo}}">{{end}}{{end}}
+    <h1 class="text-xl font-bold" style="color:var(--primary)">Reset Password</h1>
+    <p class="text-sm text-gray-500">Masukkan kode OTP dari email + password baru.</p>
+  </div>
+  {{if .flash_error}}<div class="alert alert-danger">{{.flash_error}}</div>{{end}}
+  {{if .flash_success}}<div class="alert alert-success">{{.flash_success}}</div>{{end}}
+  <form method="post" action="/admin/v1/auth/reset/process">
+    <input type="hidden" name="_csrf" value="{{._csrf}}">
+    <div class="mb-3"><label class="form-label fw-semibold">Email</label><input type="email" name="email" required value="{{.email}}" class="form-control"></div>
+    <div class="mb-3"><label class="form-label fw-semibold">Kode OTP</label><input type="text" name="otp" required inputmode="numeric" class="form-control" placeholder="123456" style="letter-spacing:.2em"></div>
+    <div class="mb-3"><label class="form-label fw-semibold">Password Baru</label><input type="password" name="password" required minlength="8" class="form-control"></div>
+    <div class="mb-3"><label class="form-label fw-semibold">Konfirmasi Password</label><input type="password" name="password_confirmation" required minlength="8" class="form-control"></div>
+    <button type="submit" class="btn btn-primary-tw w-100" style="padding:.6rem">Reset Password</button>
+  </form>
+  <p class="text-center mt-4" style="font-size:.85rem"><a href="/auth/login" class="text-primary-tw text-decoration-none">Kembali ke login</a></p>
+</div>
+{{template "auth/foot" .}}{{end}}

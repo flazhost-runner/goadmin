@@ -1,0 +1,51 @@
+{{define "permissions/edit"}}{{template "admin/head" .}}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Permission Management</h1>
+</div>
+
+<div class="tw-card p-6">
+  <h2 class="text-lg font-bold mb-4" style="color:var(--primary)">Permission Form</h2>
+  <form method="post" action="{{.action}}">
+    <input type="hidden" name="_csrf" value="{{._csrf}}">
+    <div class="mb-3">
+      <label for="name" class="form-label fw-semibold">Name</label>
+      <input id="name" type="text" name="name" value="{{if .permission}}{{.permission.Name}}{{end}}" class="form-control{{if getError . "name"}} is-invalid{{end}}">
+      {{if getError . "name"}}<div class="invalid-feedback">{{getError . "name"}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="guard_name" class="form-label fw-semibold">Guard</label>
+      <select name="guard_name" id="guard_name" class="form-control">
+        <option value="web" {{if .permission}}{{if eq .permission.GuardName "web"}}selected{{end}}{{else}}selected{{end}}>web</option>
+        <option value="api" {{if .permission}}{{if eq .permission.GuardName "api"}}selected{{end}}{{end}}>api</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label for="method" class="form-label fw-semibold">Method</label>
+      <select id="method" name="method" class="form-control{{if getError . "method"}} is-invalid{{end}}">
+        <option value="">-- Select Method --</option>
+        <option value="GET"    {{if .permission}}{{if eq .permission.Method "GET"   }}selected{{end}}{{end}}>GET</option>
+        <option value="POST"   {{if .permission}}{{if eq .permission.Method "POST"  }}selected{{end}}{{end}}>POST</option>
+        <option value="PUT"    {{if .permission}}{{if eq .permission.Method "PUT"   }}selected{{end}}{{end}}>PUT</option>
+        <option value="PATCH"  {{if .permission}}{{if eq .permission.Method "PATCH" }}selected{{end}}{{end}}>PATCH</option>
+        <option value="DELETE" {{if .permission}}{{if eq .permission.Method "DELETE"}}selected{{end}}{{end}}>DELETE</option>
+      </select>
+      {{if getError . "method"}}<div class="invalid-feedback">{{getError . "method"}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="status" class="form-label fw-semibold">Status</label>
+      <select name="status" id="status" class="form-control">
+        <option value="Active" {{if .permission}}{{if eq .permission.Status "Active"}}selected{{end}}{{else}}selected{{end}}>Active</option>
+        <option value="Inactive" {{if .permission}}{{if eq .permission.Status "Inactive"}}selected{{end}}{{end}}>Inactive</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label for="description" class="form-label fw-semibold">Description</label>
+      <input id="description" type="text" name="description" value="{{if .permission}}{{.permission.Description}}{{end}}" class="form-control">
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary-tw px-4 py-2"><i class="fas fa-save me-1"></i> Save</button>
+      <a href="/admin/v1/access/permission" class="btn btn-danger px-4 py-2">Back</a>
+    </div>
+  </form>
+</div>
+{{template "admin/foot" .}}{{end}}

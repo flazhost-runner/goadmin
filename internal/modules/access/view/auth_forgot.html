@@ -1,0 +1,17 @@
+{{define "auth/forgot"}}{{template "auth/head" .}}
+<div class="w-full max-w-sm tw-card p-8">
+  <div class="mb-6 text-center">
+    {{if .setting}}{{if .setting.Logo}}<img class="h-12 mx-auto object-contain mb-3" src="{{.setting.Logo}}">{{end}}{{end}}
+    <h1 class="text-xl font-bold" style="color:var(--primary)">Lupa Password</h1>
+    <p class="text-sm text-gray-500">Masukkan email — kami kirim kode OTP reset.</p>
+  </div>
+  {{if .flash_error}}<div class="alert alert-danger">{{.flash_error}}</div>{{end}}
+  {{if .flash_success}}<div class="alert alert-success">{{.flash_success}}</div>{{end}}
+  <form method="post" action="/admin/v1/auth/reset/request">
+    <input type="hidden" name="_csrf" value="{{._csrf}}">
+    <div class="mb-3"><label class="form-label fw-semibold">Email</label><input type="email" name="email" required autofocus class="form-control" placeholder="admin@admin.com"></div>
+    <button type="submit" class="btn btn-primary-tw w-100" style="padding:.6rem">Kirim OTP</button>
+  </form>
+  <p class="text-center mt-4" style="font-size:.85rem"><a href="/auth/login" class="text-primary-tw text-decoration-none">Kembali ke login</a></p>
+</div>
+{{template "auth/foot" .}}{{end}}

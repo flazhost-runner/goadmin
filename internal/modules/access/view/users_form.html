@@ -1,0 +1,115 @@
+{{define "users/form"}}{{template "admin/head" .}}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">User Management</h1>
+</div>
+
+<div class="tw-card p-6">
+  <h2 class="text-lg font-bold mb-4" style="color:var(--primary)">User Form</h2>
+  <form method="post" action="{{.action}}" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="{{._csrf}}">
+
+    <div class="mb-3">
+      <label for="code" class="form-label fw-semibold">Code</label>
+      {{$code := index .old "code"}}{{if and (eq $code "") .user}}{{$code = .user.Code}}{{end}}
+      <input id="code" type="text" class="form-control {{if index .errors "code"}}is-invalid{{end}}" name="code" value="{{$code}}">
+      {{with index .errors "code"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="name" class="form-label fw-semibold">Name</label>
+      {{$name := index .old "name"}}{{if and (eq $name "") .user}}{{$name = .user.Name}}{{end}}
+      <input id="name" type="text" class="form-control {{if index .errors "name"}}is-invalid{{end}}" name="name" value="{{$name}}">
+      {{with index .errors "name"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="phone" class="form-label fw-semibold">Phone Number</label>
+      {{$phone := index .old "phone"}}{{if and (eq $phone "") .user}}{{$phone = .user.Phone}}{{end}}
+      <input id="phone" type="text" class="form-control {{if index .errors "phone"}}is-invalid{{end}}" name="phone" value="{{$phone}}">
+      {{with index .errors "phone"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label fw-semibold">Email</label>
+      {{$email := index .old "email"}}{{if and (eq $email "") .user}}{{$email = .user.Email}}{{end}}
+      <input id="email" type="email" class="form-control {{if index .errors "email"}}is-invalid{{end}}" name="email" value="{{$email}}">
+      {{with index .errors "email"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="timezone" class="form-label fw-semibold">Timezone</label>
+      {{$tz := index .old "timezone"}}{{if and (eq $tz "") .user}}{{$tz = .user.Timezone}}{{end}}{{if eq $tz ""}}{{$tz = "UTC"}}{{end}}
+      <select id="timezone" name="timezone" class="form-control {{if index .errors "timezone"}}is-invalid{{end}}">
+        {{range .timezones}}<option value="{{.}}" {{if eq . $tz}}selected{{end}}>{{.}}</option>{{end}}
+      </select>
+      {{with index .errors "timezone"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label fw-semibold">Password{{if .user}} <span class="text-gray-400 text-xs">(leave blank to keep)</span>{{end}}</label>
+      <input id="password" type="password" class="form-control {{if index .errors "password"}}is-invalid{{end}}" name="password" value="">
+      {{with index .errors "password"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="password_confirmation" class="form-label fw-semibold">Password Confirm</label>
+      <input id="password_confirmation" type="password" class="form-control {{if index .errors "password_confirmation"}}is-invalid{{end}}" name="password_confirmation" value="">
+      {{with index .errors "password_confirmation"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="status" class="form-label fw-semibold">Status</label>
+      {{$st := index .old "status"}}{{if and (eq $st "") .user}}{{$st = .user.Status}}{{end}}
+      <select name="status" id="status" class="form-control {{if index .errors "status"}}is-invalid{{end}}" required>
+        <option value="Active" {{if eq $st "Active"}}selected{{end}}>Active</option>
+        <option value="Inactive" {{if eq $st "Inactive"}}selected{{end}}>Inactive</option>
+      </select>
+      {{with index .errors "status"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label for="picture" class="form-label fw-semibold">Picture</label>
+      <div class="preview mb-3" id="preview"><img src="{{if .user}}{{.user.Picture}}{{end}}" style="max-width:160px" class="rounded border p-1" alt="picture"></div>
+      <input id="picture" type="file" class="form-control {{if index .errors "picture"}}is-invalid{{end}}" name="picture" accept="image/png,image/jpeg,image/gif,image/webp" onchange="previewImage(event)">
+      {{with index .errors "picture"}}<div class="text-danger small mt-1">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold d-block">Blocked</label>
+      <div class="d-flex flex-wrap gap-3 p-2 rounded border">
+        <label class="d-flex align-items-center gap-2"><input id="blocked" type="checkbox" name="blocked" value="1" class="w-4 h-4" {{if .user}}{{if .user.Blocked}}checked{{end}}{{end}}><span>Blokir akun</span></label>
+      </div>
+    </div>
+    <div class="mb-3" id="div_blocked_reason">
+      <label for="blocked_reason" class="form-label fw-semibold">Blocked Reason</label>
+      {{$br := index .old "blocked_reason"}}{{if and (eq $br "") .user}}{{$br = .user.BlockedReason}}{{end}}
+      <input id="blocked_reason" type="text" class="form-control {{if index .errors "blocked_reason"}}is-invalid{{end}}" name="blocked_reason" value="{{$br}}">
+      {{with index .errors "blocked_reason"}}<div class="invalid-feedback">{{.}}</div>{{end}}
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-semibold d-block">Role</label>
+      <div class="d-flex flex-wrap gap-3 p-2 rounded border {{if index .errors "roles"}}border-danger{{end}}">
+        {{range .roles}}
+        <label class="d-flex align-items-center gap-2"><input type="checkbox" name="roles[]" value="{{.ID}}" class="w-4 h-4" {{if index $.selected .ID}}checked{{end}}><span>{{.Name}}</span></label>
+        {{else}}<span class="text-muted small">Belum ada role.</span>{{end}}
+      </div>
+      {{with index .errors "roles"}}<div class="text-red-600 text-sm mt-1">{{.}}</div>{{end}}
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary-tw px-4 py-2"><i class="fas fa-save me-1"></i> Save</button>
+      <a href="/admin/v1/access/user" class="btn btn-danger px-4 py-2">Back</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  function previewImage(event) {
+    const preview = document.getElementById('preview');
+    preview.innerHTML = '';
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) { const img = document.createElement('img'); img.src = e.target.result; img.style.maxWidth='160px'; img.className='rounded border p-1'; preview.appendChild(img); };
+      reader.readAsDataURL(file);
+    } else { preview.innerHTML = '<p class="text-muted">No image selected</p>'; }
+  }
+  $(document).ready(function(){
+    $('#div_blocked_reason').toggle($('#blocked').is(':checked'));
+    $('#blocked').click(function(){
+      if(this.checked){ $('#div_blocked_reason').show(); } else { $('#blocked_reason').val(''); $('#div_blocked_reason').hide(); }
+    });
+  });
+</script>
+{{template "admin/foot" .}}{{end}}

@@ -1,0 +1,38 @@
+// Package web berisi controller HTML modul {{.Module}} (jalur sesi). Render lewat
+// view.RenderView (bukan c.HTML path mentah) — di-enforce checker.
+package web
+
+import (
+	"github.com/gin-gonic/gin"
+
+	"goadmin/internal/modules/{{.Module}}/dto"
+	"goadmin/internal/modules/{{.Module}}/service"
+	"goadmin/internal/view"
+)
+
+// {{.Type}}Controller menyajikan halaman admin {{.Module}}.
+type {{.Type}}Controller struct {
+	items service.I{{.Type}}Service
+}
+
+// New{{.Type}}Controller merakit controller (service di-inject).
+func New{{.Type}}Controller(items service.I{{.Type}}Service) *{{.Type}}Controller {
+	return &{{.Type}}Controller{items: items}
+}
+
+// Index → GET /admin/v1/{{.Plural}} (daftar {{.Module}} + search + paginasi).
+func (ctl *{{.Type}}Controller) Index(c *gin.Context) {
+	var q dto.ListQuery
+	_ = c.ShouldBindQuery(&q)
+	res, err := ctl.items.Index(c.Request.Context(), q)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	view.RenderView(c, "{{.Module}}/index", gin.H{
+		"title":  "Manajemen {{.Type}}",
+		"items":  res.Data,
+		"meta":   res.Meta,
+		"search": q.Search,
+	})
+}

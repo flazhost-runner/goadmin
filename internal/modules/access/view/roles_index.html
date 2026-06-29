@@ -1,0 +1,89 @@
+{{define "roles/index"}}{{template "admin/head" .}}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">Role Management</h1>
+</div>
+
+<form id="searchform" method="get"></form>
+<form id="selection" method="post" action="/admin/v1/access/role/delete_selected">
+  <input type="hidden" name="_csrf" value="{{._csrf}}">
+</form>
+
+<div class="tw-card p-0 overflow-hidden">
+  <div class="px-6 py-4 border-b flex items-center justify-between">
+    <h2 class="text-lg font-bold" style="color:var(--primary)">Role List</h2>
+    <div class="btn-group btn-sm">
+      <a href="/admin/v1/access/role/create" class="btn btn-success btn-sm"><i class="fas fa-fw fa-plus"></i> Add Data</a>
+      <button type="submit" form="selection" data-confirm="Confirm Delete" class="btn btn-danger btn-sm"><i class="fas fa-fw fa-times"></i> Delete Selected</button>
+    </div>
+  </div>
+  <div class="p-4" style="overflow-x:auto">
+    <table class="table table-bordered table-hover align-middle">
+      <thead>
+        <tr>
+          <th width="2%"></th>
+          <th width="7%">
+            <select name="q_page_size" form="searchform" class="form-control">
+              <option value="10" {{if eq .filter.q_page_size 10}}selected{{end}}>10</option>
+              <option value="20" {{if eq .filter.q_page_size 20}}selected{{end}}>20</option>
+              <option value="50" {{if eq .filter.q_page_size 50}}selected{{end}}>50</option>
+              <option value="100" {{if eq .filter.q_page_size 100}}selected{{end}}>100</option>
+            </select>
+          </th>
+          <th width="22%"><input type="text" form="searchform" class="form-control" id="q_name" name="q_name" value="{{.filter.q_name}}"></th>
+          <th width="12%">
+            <select name="q_status" form="searchform" class="form-control">
+              <option value="" disabled selected>Select</option>
+              <option value="Active" {{if eq .filter.q_status "Active"}}selected{{end}}>Active</option>
+              <option value="Inactive" {{if eq .filter.q_status "Inactive"}}selected{{end}}>Inactive</option>
+            </select>
+          </th>
+          <th width="18%"><input type="text" form="searchform" class="form-control" id="q_desc" name="q_desc" value="{{.filter.q_desc}}"></th>
+          <th width="5%" class="text-center align-middle">
+            <div class="btn-group">
+              <button type="submit" form="searchform" class="btn btn-sm btn-success"><i class="fas fa-fw fa-search"></i></button>
+              <a href="/admin/v1/access/role" class="btn btn-sm btn-danger"><i class="fas fa-fw fa-times"></i></a>
+            </div>
+          </th>
+        </tr>
+        <tr>
+          <th width="5%"><input type="checkbox" id="checkall"></th>
+          <th width="5%">No</th>
+          <th width="22%">Name</th>
+          <th width="12%">Status</th>
+          <th width="18%">Description</th>
+          <th width="10%">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range $i, $r := .roles}}
+        <tr>
+          <td><input type="checkbox" form="selection" name="selected[]" value="{{$r.ID}}"></td>
+          <td>{{add $.meta.From $i}}</td>
+          <td class="font-semibold">{{$r.Name}}</td>
+          <td class="text-left">
+            {{if eq $r.Status "Active"}}<i class="fas fa-check-circle text-green-500 text-xl" title="Active"></i>
+            {{else}}<i class="fas fa-times-circle text-red-500 text-xl" title="Inactive"></i>{{end}}
+          </td>
+          <td>{{$r.Description}}</td>
+          <td class="text-center">
+            <div class="btn-group">
+              <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle-dd>Action</button>
+              <div class="dropdown-menu dropdown-menu-end">
+                <a href="/admin/v1/access/role/{{$r.ID}}/permission" class="dropdown-item"><i class="fas fa-key fa-fw"></i> Permission</a>
+                <a href="/admin/v1/access/role/{{$r.ID}}/edit" class="dropdown-item"><i class="fas fa-pen fa-fw"></i> Edit</a>
+                <div class="dropdown-divider"></div>
+                <form method="post" action="/admin/v1/access/role/{{$r.ID}}/delete?_method=DELETE&_csrf={{$._csrf}}" class="m-0">
+                  <button type="submit" data-confirm="Confirm Delete" class="dropdown-item danger"><i class="fas fa-trash fa-fw"></i> Delete</button>
+                </form>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {{else}}<tr><td colspan="6" class="text-center text-gray-400 py-4">Tidak ada data.</td></tr>{{end}}
+      </tbody>
+    </table>
+    {{template "admin/pagination" .}}
+  </div>
+</div>
+<script>$("#checkall").click(function(){ $('input:checkbox').not(this).prop('checked', this.checked); });</script>
+{{template "admin/foot" .}}{{end}}
