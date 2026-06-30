@@ -1,0 +1,77 @@
+package integration
+
+import (
+	"context"
+	"testing"
+
+	"goadmin/internal/config"
+	apperr "goadmin/internal/errors"
+	"goadmin/internal/modules/{{.Module}}/dto"
+	{{.Module}}mig "goadmin/internal/modules/{{.Module}}/migration"
+	"goadmin/internal/modules/{{.Module}}/service"
+	"goadmin/tests/testutil"
+)
+
+// new{{.Type}}Svc menyiapkan service {{.Module}} di atas SQLite in-memory ter-migrate.
+func new{{.Type}}Svc(t *testing.T) (*service.{{.Type}}Service, context.Context) {
+	t.Helper()
+	c := testutil.NewContainer(t, config.ModeFull)
+	if err := {{.Module}}mig.AutoMigrate(c.DB); err != nil {
+		t.Fatalf("migrate {{.Module}}: %v", err)
+	}
+	return service.New{{.Type}}Service(c.DB), context.Background()
+}
+
+// Integration: {{.Type}}Service ↔ DB — Store→Show→Index(search ciLike portabel).
+func Test{{.Type}}Service_StoreShowIndex(t *testing.T) {
+	svc, ctx := new{{.Type}}Svc(t)
+
+	created, err := svc.Store(ctx, dto.Create{{.Type}}Input{Name: "Alpha"}, "tester")
+	if err != nil {
+		t.Fatalf("store: %v", err)
+	}
+	if created.ID == "" || created.Code == "" {
+		t.Fatalf("id/code kosong: %+v", created)
+	}
+
+	got, err := svc.Show(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("show: %v", err)
+	}
+	if got.Name != "Alpha" {
+		t.Fatalf("name mismatch: %s", got.Name)
+	}
+
+	// Search case-insensitive portabel (ciLike) — bekerja di SQLite.
+	res, err := svc.Index(ctx, dto.ListQuery{Search: "ALPH"})
+	if err != nil {
+		t.Fatalf("index: %v", err)
+	}
+	if len(res.Data) != 1 {
+		t.Fatalf("ciLike gagal: harap 1, dapat %d", len(res.Data))
+	}
+}
+
+func Test{{.Type}}Service_DuplicateNameConflict(t *testing.T) {
+	svc, ctx := new{{.Type}}Svc(t)
+
+	in := dto.Create{{.Type}}Input{Name: "Dup"}
+	if _, err := svc.Store(ctx, in, ""); err != nil {
+		t.Fatalf("store pertama: %v", err)
+	}
+	_, err := svc.Store(ctx, in, "")
+	ae, ok := apperr.As(err)
+	if !ok || ae.Status != 409 {
+		t.Fatalf("harusnya AppError 409, dapat: %v", err)
+	}
+}
+
+func Test{{.Type}}Service_ShowNotFound(t *testing.T) {
+	svc, ctx := new{{.Type}}Svc(t)
+
+	_, err := svc.Show(ctx, "tidak-ada")
+	ae, ok := apperr.As(err)
+	if !ok || ae.Status != 404 {
+		t.Fatalf("harusnya AppError 404, dapat: %v", err)
+	}
+}

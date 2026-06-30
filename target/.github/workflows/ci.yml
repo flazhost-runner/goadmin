@@ -1,0 +1,101 @@
+# CI GoAdmin — gate konvensi + kualitas + portabilitas multi-DB tiap push/PR.
+# Selaras "Definition of Done" di AGENTS.md: convention checker + vet + build + test.
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    name: Convention + Vet + Build + Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Gate konvensi (guardrail) — gagal bila modul menyimpang dari pola.
+      - name: Convention checker
+        run: go run ./cmd/checkconventions
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      # Test berjalan di SQLite in-memory (cepat; membuktikan portabilitas DB).
+      - name: Test
+        run: go test ./... -count=1
+
+  # Matrix portabilitas: jalankan migrasi VERSIONED (golang-migrate, file SQL
+  # .up/.down) terhadap MySQL & Postgres nyata → membuktikan SQL migrasi portabel
+  # lintas dialek + jalur produksi berfungsi (bukan cuma AutoMigrate SQLite).
+  db-portability:
+    name: Migrate (${{ matrix.db }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db: [mysql, postgres]
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: goadmin
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: goadmin
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set DB env (${{ matrix.db }})
+        run: |
+          if [ "${{ matrix.db }}" = "mysql" ]; then
+            echo "DB_TYPE=mysql"        >> "$GITHUB_ENV"
+            echo "DB_HOST=127.0.0.1"    >> "$GITHUB_ENV"
+            echo "DB_PORT=3306"         >> "$GITHUB_ENV"
+            echo "DB_USERNAME=root"     >> "$GITHUB_ENV"
+            echo "DB_PASSWORD=root"     >> "$GITHUB_ENV"
+          else
+            echo "DB_TYPE=postgres"     >> "$GITHUB_ENV"
+            echo "DB_HOST=127.0.0.1"    >> "$GITHUB_ENV"
+            echo "DB_PORT=5432"         >> "$GITHUB_ENV"
+            echo "DB_USERNAME=postgres" >> "$GITHUB_ENV"
+            echo "DB_PASSWORD=postgres" >> "$GITHUB_ENV"
+          fi
+          echo "DB_DATABASE=goadmin"    >> "$GITHUB_ENV"
+          echo "NODE_ENV=test"          >> "$GITHUB_ENV"
+
+      # golang-migrate up (SQL versioned) + seed terhadap DB nyata, lalu down 1
+      # (uji reversibilitas), lalu up lagi. Sukses = migrasi portabel & reversibel.
+      - name: Migrate up + seed (${{ matrix.db }})
+        run: go run ./cmd/migrate
+
+      - name: Rollback 1 + re-up (${{ matrix.db }})
+        run: |
+          go run ./cmd/migrate -down 1
+          go run ./cmd/migrate -seed=false

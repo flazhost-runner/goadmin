@@ -1,0 +1,90 @@
+package api
+
+import (
+	"github.com/gin-gonic/gin"
+
+	apperr "goadmin/internal/errors"
+	"goadmin/internal/helpers"
+	accessmw "goadmin/internal/modules/access/middleware"
+	"goadmin/internal/modules/{{.Module}}/dto"
+	"goadmin/internal/modules/{{.Module}}/service"
+)
+
+// {{.Type}}Controller = REST CRUD {{.Module}}.
+type {{.Type}}Controller struct {
+	items service.I{{.Type}}Service
+}
+
+// New{{.Type}}Controller merakit controller (service di-inject).
+func New{{.Type}}Controller(items service.I{{.Type}}Service) *{{.Type}}Controller {
+	return &{{.Type}}Controller{items: items}
+}
+
+// Index → GET /api/v1/{{.Plural}}.
+func (ctl *{{.Type}}Controller) Index(c *gin.Context) {
+	var q dto.ListQuery
+	_ = c.ShouldBindQuery(&q)
+	res, err := ctl.items.Index(c.Request.Context(), q)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	helpers.OK(c, "OK", res)
+}
+
+// Show → GET /api/v1/{{.Plural}}/:id.
+func (ctl *{{.Type}}Controller) Show(c *gin.Context) {
+	item, err := ctl.items.Show(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	helpers.OK(c, "OK", item)
+}
+
+// Store → POST /api/v1/{{.Plural}}.
+func (ctl *{{.Type}}Controller) Store(c *gin.Context) {
+	var in dto.Create{{.Type}}Input
+	if err := c.ShouldBindJSON(&in); err != nil {
+		c.Error(apperr.Validation("Input tidak valid", nil))
+		return
+	}
+	item, err := ctl.items.Store(c.Request.Context(), in, actorID(c))
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	helpers.Created(c, "{{.Type}} dibuat", item)
+}
+
+// Update → PUT /api/v1/{{.Plural}}/:id.
+func (ctl *{{.Type}}Controller) Update(c *gin.Context) {
+	var in dto.Update{{.Type}}Input
+	if err := c.ShouldBindJSON(&in); err != nil {
+		c.Error(apperr.Validation("Input tidak valid", nil))
+		return
+	}
+	item, err := ctl.items.Update(c.Request.Context(), c.Param("id"), in, actorID(c))
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	helpers.OK(c, "{{.Type}} diperbarui", item)
+}
+
+// Destroy → DELETE /api/v1/{{.Plural}}/:id.
+func (ctl *{{.Type}}Controller) Destroy(c *gin.Context) {
+	if err := ctl.items.Destroy(c.Request.Context(), c.Param("id")); err != nil {
+		c.Error(err)
+		return
+	}
+	helpers.OK(c, "{{.Type}} dihapus", nil)
+}
+
+// actorID mengambil id user terotentikasi dari context (kosong bila tak ada).
+func actorID(c *gin.Context) string {
+	if u := accessmw.UserFrom(c); u != nil {
+		return u.ID
+	}
+	return ""
+}

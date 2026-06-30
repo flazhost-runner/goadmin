@@ -1,0 +1,21 @@
+// Package migration menyediakan AutoMigrate modul {{.Module}} (dev/test).
+// Untuk PRODUKSI gunakan golang-migrate (.up/.down.sql portabel).
+package migration
+
+import (
+	"gorm.io/gorm"
+
+	"goadmin/internal/modules/{{.Module}}/model"
+)
+
+// Models mengembalikan entity modul {{.Module}} (untuk AutoMigrate).
+func Models() []interface{} {
+	return []interface{}{
+		&model.{{.Type}}{},
+	}
+}
+
+// AutoMigrate membuat/menyelaraskan skema modul {{.Module}} (dev/test).
+func AutoMigrate(db *gorm.DB) error {
+	return db.AutoMigrate(Models()...)
+}

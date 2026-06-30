@@ -1,0 +1,21 @@
+// Package service berisi logika bisnis modul {{.Module}}. Tiap service
+// mengimplementasi I*Service (Dependency Inversion) & mengembalikan *AppError
+// saat gagal (dipetakan middleware ke HTTP), BUKAN error telanjang.
+package service
+
+import (
+	"context"
+
+	"goadmin/internal/helpers"
+	"goadmin/internal/modules/{{.Module}}/dto"
+	"goadmin/internal/modules/{{.Module}}/model"
+)
+
+// I{{.Type}}Service = kontrak manajemen {{.Module}}.
+type I{{.Type}}Service interface {
+	Index(ctx context.Context, q dto.ListQuery) (helpers.Paginated[model.{{.Type}}], error)
+	Show(ctx context.Context, id string) (*model.{{.Type}}, error)
+	Store(ctx context.Context, in dto.Create{{.Type}}Input, actorID string) (*model.{{.Type}}, error)
+	Update(ctx context.Context, id string, in dto.Update{{.Type}}Input, actorID string) (*model.{{.Type}}, error)
+	Destroy(ctx context.Context, id string) error
+}

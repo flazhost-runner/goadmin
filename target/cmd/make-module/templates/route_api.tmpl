@@ -1,0 +1,29 @@
+package {{.Module}}
+
+import (
+	"goadmin/internal/router"
+
+	accessmw "goadmin/internal/modules/access/middleware"
+	apictl "goadmin/internal/modules/{{.Module}}/controller/api"
+)
+
+// registerAPIRoutes memasang 5 endpoint CRUD REST modul {{.Module}} dengan guard
+// per-aksi (RBAC: {{.Module}}.view/.create/.update/.delete; Administrator bypass).
+func registerAPIRoutes(ctx *router.RegistrationContext, guard *accessmw.Guard, ctl *apictl.{{.Type}}Controller) {
+	g := ctx.API.Group("/v1/{{.Plural}}", guard.AuthenticatedJWT())
+
+	g.GET("", accessmw.Authorize("{{.Module}}.view"), ctl.Index)
+	router.Register("api.v1.{{.Plural}}.index", "/api/v1/{{.Plural}}")
+
+	g.GET("/:id", accessmw.Authorize("{{.Module}}.view"), ctl.Show)
+	router.Register("api.v1.{{.Plural}}.show", "/api/v1/{{.Plural}}/:id")
+
+	g.POST("", accessmw.Authorize("{{.Module}}.create"), ctl.Store)
+	router.Register("api.v1.{{.Plural}}.store", "/api/v1/{{.Plural}}")
+
+	g.PUT("/:id", accessmw.Authorize("{{.Module}}.update"), ctl.Update)
+	router.Register("api.v1.{{.Plural}}.update", "/api/v1/{{.Plural}}/:id")
+
+	g.DELETE("/:id", accessmw.Authorize("{{.Module}}.delete"), ctl.Destroy)
+	router.Register("api.v1.{{.Plural}}.destroy", "/api/v1/{{.Plural}}/:id")
+}

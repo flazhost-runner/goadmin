@@ -1,0 +1,122 @@
+package service
+
+import (
+	"context"
+	"errors"
+
+	"gorm.io/gorm"
+
+	apperr "goadmin/internal/errors"
+	"goadmin/internal/helpers"
+	"goadmin/internal/modules/{{.Module}}/dto"
+	"goadmin/internal/modules/{{.Module}}/model"
+)
+
+// {{.Type}}Service mengimplementasi I{{.Type}}Service. Dependency (DB) di-inject
+// lewat konstruktor — tak ada state global.
+type {{.Type}}Service struct {
+	db *gorm.DB
+}
+
+// Pastikan kontrak terpenuhi saat compile.
+var _ I{{.Type}}Service = (*{{.Type}}Service)(nil)
+
+// New{{.Type}}Service merakit service (dipanggil di wiring module.go).
+func New{{.Type}}Service(db *gorm.DB) *{{.Type}}Service {
+	return &{{.Type}}Service{db: db}
+}
+
+func (s *{{.Type}}Service) Index(ctx context.Context, q dto.ListQuery) (helpers.Paginated[model.{{.Type}}], error) {
+	query := s.db.WithContext(ctx).Model(&model.{{.Type}}{})
+	if q.Search != "" {
+		query = helpers.CiLikeAny(query, []string{"name", "code"}, q.Search)
+	}
+	query = query.Order("created_at DESC")
+
+	var rows []model.{{.Type}}
+	meta, err := helpers.Paginate(query, q.Page, q.PerPage, &rows)
+	if err != nil {
+		return helpers.Paginated[model.{{.Type}}]{}, apperr.Internal(err.Error())
+	}
+	return helpers.Paginated[model.{{.Type}}]{Data: rows, Meta: meta}, nil
+}
+
+func (s *{{.Type}}Service) Show(ctx context.Context, id string) (*model.{{.Type}}, error) {
+	var item model.{{.Type}}
+	if err := s.db.WithContext(ctx).First(&item, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperr.NotFound("{{.Type}} tidak ditemukan")
+		}
+		return nil, apperr.Internal(err.Error())
+	}
+	return &item, nil
+}
+
+func (s *{{.Type}}Service) Store(ctx context.Context, in dto.Create{{.Type}}Input, actorID string) (*model.{{.Type}}, error) {
+	// Cegah nama duplikat (pesan domain → 409).
+	var count int64
+	if err := s.db.WithContext(ctx).Model(&model.{{.Type}}{}).Where("name = ?", in.Name).Count(&count).Error; err != nil {
+		return nil, apperr.Internal(err.Error())
+	}
+	if count > 0 {
+		return nil, apperr.Conflict("{{.Type}} dengan nama itu sudah ada")
+	}
+
+	status := in.Status
+	if status == "" {
+		status = model.{{.Type}}Active
+	}
+
+	item := model.{{.Type}}{
+		ID:        helpers.NewID(),
+		Code:      helpers.NewCode("{{.CodePrefix}}"),
+		Name:      in.Name,
+		Status:    status,
+		CreatedBy: actorID,
+	}
+	if err := s.db.WithContext(ctx).Create(&item).Error; err != nil {
+		return nil, apperr.Internal(err.Error())
+	}
+	return &item, nil
+}
+
+func (s *{{.Type}}Service) Update(ctx context.Context, id string, in dto.Update{{.Type}}Input, actorID string) (*model.{{.Type}}, error) {
+	item, err := s.Show(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Nama unik (selain milik sendiri).
+	if in.Name != item.Name {
+		var count int64
+		if err := s.db.WithContext(ctx).Model(&model.{{.Type}}{}).
+			Where("name = ? AND id <> ?", in.Name, id).Count(&count).Error; err != nil {
+			return nil, apperr.Internal(err.Error())
+		}
+		if count > 0 {
+			return nil, apperr.Conflict("{{.Type}} dengan nama itu sudah ada")
+		}
+	}
+
+	item.Name = in.Name
+	if in.Status != "" {
+		item.Status = in.Status
+	}
+	item.UpdatedBy = actorID
+
+	if err := s.db.WithContext(ctx).Save(item).Error; err != nil {
+		return nil, apperr.Internal(err.Error())
+	}
+	return item, nil
+}
+
+func (s *{{.Type}}Service) Destroy(ctx context.Context, id string) error {
+	item, err := s.Show(ctx, id)
+	if err != nil {
+		return err
+	}
+	if err := s.db.WithContext(ctx).Delete(item).Error; err != nil {
+		return apperr.Internal(err.Error())
+	}
+	return nil
+}

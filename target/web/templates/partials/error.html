@@ -1,0 +1,18 @@
+{{define "errors/index"}}<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.status}} — GoAdmin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex items-center justify-center">
+  <div class="text-center px-6">
+    <div class="text-7xl font-extrabold text-slate-300">{{.status}}</div>
+    <p class="mt-4 text-lg text-slate-600">{{.message}}</p>
+    <a href="/" class="mt-8 inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium">
+      Kembali ke beranda
+    </a>
+  </div>
+</body>
+</html>{{end}}

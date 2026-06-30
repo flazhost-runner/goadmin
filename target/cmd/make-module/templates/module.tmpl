@@ -1,0 +1,46 @@
+// Package {{.Module}} adalah modul CRUD {{.Type}}. Mendaftarkan diri ke router
+// registry lewat init() (side-effect import di internal/modules/modules.go).
+package {{.Module}}
+
+import (
+{{- if .WantWeb}}
+	"goadmin/internal/config"
+{{- end}}
+	"goadmin/internal/router"
+
+	accessmw "goadmin/internal/modules/access/middleware"
+	apictl "goadmin/internal/modules/{{.Module}}/controller/api"
+	"goadmin/internal/modules/{{.Module}}/service"
+)
+
+// Module mengimplementasi router.Module.
+type Module struct{}
+
+// init mendaftarkan modul saat paket diimpor.
+func init() { router.Add(&Module{}) }
+
+// Name → identitas modul.
+func (m *Module) Name() string { return "{{.Module}}" }
+
+// Register merakit service modul ke container + memasang route.
+func (m *Module) Register(ctx *router.RegistrationContext) {
+	c := ctx.Container
+
+	// --- Wiring service (DI manual terpusat — composition root) ---
+	svc := service.New{{.Type}}Service(c.DB)
+	c.Provide("{{.Module}}.I{{.Type}}Service", svc)
+
+	// Guard dipinjam dari modul access (blacklist SAMA → logout konsisten
+	// lintas-modul). 'access' terdaftar lebih dulu (urut nama).
+	guard, _ := c.Resolve("access.Guard").(*accessmw.Guard)
+
+	// --- Route API (selalu) ---
+	registerAPIRoutes(ctx, guard, apictl.New{{.Type}}Controller(svc))
+{{- if .WantWeb}}
+
+	// --- Route web (hanya mode full) ---
+	if ctx.Mode == config.ModeFull && ctx.Web != nil {
+		registerWebRoutes(ctx)
+	}
+{{- end}}
+}

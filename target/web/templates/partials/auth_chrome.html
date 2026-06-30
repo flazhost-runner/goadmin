@@ -1,0 +1,28 @@
+{{/* Chrome auth (full-width, tanpa sidebar) — themed. Dipakai login/register/reset. */}}
+{{define "auth/head"}}<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{{.title}} — {{if .setting}}{{.setting.Name}}{{else}}GoAdmin{{end}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{primary:'{{.theme.Primary}}',secondary:'{{.theme.Secondary}}','theme-light':'{{.theme.Light}}','theme-dark':'{{.theme.Dark}}'}}}}</script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    :root{--primary:{{.theme.Primary}};--secondary:{{.theme.Secondary}};--theme-light:{{.theme.Light}};--theme-dark:{{.theme.Dark}}}
+    body{background:linear-gradient(135deg,var(--theme-light) 0%,#f8fafc 100%)}
+    .tw-card{background:#fff;border-radius:1rem;box-shadow:0 10px 25px -5px rgba(0,0,0,.08),0 8px 10px -6px rgba(0,0,0,.05)}
+    .sidebar-gradient{background:var(--theme-dark)}
+    .form-control{display:block;width:100%;border:1px solid #d1d5db;border-radius:.5rem;padding:.5rem .75rem;color:#1f2937}
+    .form-control:focus{outline:0;border-color:var(--primary);box-shadow:0 0 0 2px var(--theme-light)}
+    .form-label{display:block;margin-bottom:.25rem;font-size:.875rem;color:#374151} .fw-semibold{font-weight:600}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:.25rem;border:0;border-radius:.5rem;padding:.5rem 1rem;font-size:.875rem;font-weight:500;cursor:pointer;text-decoration:none}
+    .btn-primary-tw{background:var(--primary);color:#fff} .btn-primary-tw:hover{background:var(--theme-dark)}
+    .w-100{width:100%} .alert{border-radius:.5rem;padding:.75rem 1rem;margin-bottom:1rem;font-size:.875rem;border:1px solid}
+    .alert-danger{background:#fef2f2;color:#b91c1c;border-color:#fecaca} .alert-success{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+    .text-primary-tw{color:var(--primary)} .text-decoration-none{text-decoration:none} .d-flex{display:flex} .justify-content-between{justify-content:space-between}
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">{{end}}
+
+{{define "auth/foot"}}</body></html>{{end}}

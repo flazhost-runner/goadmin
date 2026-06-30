@@ -1,0 +1,7 @@
+/* Diekstrak dari template default opentailwind (agency-002). */
+    * { font-family: 'Inter', sans-serif; }
+    [data-motion] { opacity: 0; }
+    [data-animate] { opacity: 0; }
+ /* Notification dropdown - hidden by default, shown when active */
+ .notification-dropdown { display: none; }
+ .notification-dropdown.active { display: block; }

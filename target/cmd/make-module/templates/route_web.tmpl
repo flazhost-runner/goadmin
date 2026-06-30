@@ -1,0 +1,29 @@
+package {{.Module}}
+
+import (
+	"goadmin/internal/router"
+
+	accessmw "goadmin/internal/modules/access/middleware"
+	accesssvc "goadmin/internal/modules/access/service"
+	webctl "goadmin/internal/modules/{{.Module}}/controller/web"
+	"goadmin/internal/modules/{{.Module}}/service"
+)
+
+// registerWebRoutes memasang route admin {{.Module}} (HTML, sesi). Hanya dipanggil
+// mode full (ctx.Web != nil). Urutan middleware WAJIB: EnsureAuthenticatedWeb →
+// AuthorizeWeb (auth dulu, baru cek izin).
+func registerWebRoutes(ctx *router.RegistrationContext) {
+	c := ctx.Container
+
+	authSvc, _ := c.Resolve("access.IAuthService").(accesssvc.IAuthService)
+	itemSvc, _ := c.Resolve("{{.Module}}.I{{.Type}}Service").(service.I{{.Type}}Service)
+
+	jwtless := accessmw.NewGuardWebOnly(authSvc)
+	ctl := webctl.New{{.Type}}Controller(itemSvc)
+
+	admin := ctx.Web.Group("/admin/v1")
+	admin.Use(jwtless.EnsureAuthenticatedWeb("/auth/login"))
+
+	admin.GET("/{{.Plural}}", accessmw.AuthorizeWeb("{{.Module}}.view"), ctl.Index)
+	router.Register("admin.v1.{{.Plural}}.index", "/admin/v1/{{.Plural}}")
+}
