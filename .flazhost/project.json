@@ -1,0 +1,9 @@
+{
+  "name": "GoAdmin",
+  "language": "go",
+  "install": ["go mod download"],
+  "migrate": ["go run ./cmd/migrate"],
+  "start": "go run ./cmd/server",
+  "url": "http://localhost:${APP_PORT}",
+  "readyPath": "/"
+}
