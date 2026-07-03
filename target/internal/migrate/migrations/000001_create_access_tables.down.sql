@@ -1,5 +1,0 @@
-DROP TABLE IF EXISTS users_roles;
-DROP TABLE IF EXISTS roles_permissions;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS roles;
-DROP TABLE IF EXISTS permissions;
