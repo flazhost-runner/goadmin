@@ -79,6 +79,7 @@ tests/              unit · integration · api
 - [`docs/MODULE_GUIDE.md`](docs/MODULE_GUIDE.md) — cara membuat modul (manual & generator).
 - [`docs/TESTING.md`](docs/TESTING.md) — lapisan test & cara menjalankan.
 - [`docs/API.md`](docs/API.md) — daftar endpoint REST.
+- [`docs/postman/GoAdmin.postman_collection.json`](docs/postman/GoAdmin.postman_collection.json) — koleksi Postman (impor & jalankan). Variabel `base_url` default `http://localhost:3000`.
 
 ## Testing
 

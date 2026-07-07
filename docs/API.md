@@ -2,6 +2,8 @@
 
 Base path: **`/api/v1`**. Tersedia di kedua varian (`full` & `api`).
 
+> **Postman:** impor [`docs/postman/GoAdmin.postman_collection.json`](postman/GoAdmin.postman_collection.json) untuk mencoba semua endpoint. Variabel koleksi `base_url` default `http://localhost:3000` (sesuai `APP_PORT` default) — sesuaikan bila server jalan di port lain.
+
 ## Autentikasi
 
 JWT **HS256** via header `Authorization: Bearer <token>`. Token didapat dari login, dicabut (blacklist) saat logout. Endpoint ber-RBAC butuh permission spesifik; **Administrator bypass** semua permission.

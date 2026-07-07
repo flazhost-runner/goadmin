@@ -10,6 +10,8 @@ make verify      # konvensi + vet + build + test  (gate "selesai")
 go test ./tests/integration/ -run Setting -v   # subset
 ```
 
+**Manual (Postman):** impor [`docs/postman/GoAdmin.postman_collection.json`](postman/GoAdmin.postman_collection.json) untuk menguji endpoint REST secara manual. Variabel `base_url` default `http://localhost:3000`.
+
 ## Lapisan test
 
 | Lapisan | Lokasi | Cakupan |
