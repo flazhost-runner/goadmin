@@ -67,6 +67,15 @@ Dua jalur, sesuai konteks (selaras `PORTING_GUIDE`):
 
 `cmd/migrate` dialect-aware: sqlite → AutoMigrate; mysql/postgres → golang-migrate `up` (default) / `-down N` / `-force V` / `-version`. CI matrix menguji migrasi nyata di MySQL+Postgres (up→down→up). Portabilitas SQL juga diuji di SQLite (`tests/integration/migrate_test.go`).
 
+## Penyimpanan file (ringkas)
+
+`internal/storage` = abstraksi upload gambar dengan 3 driver (`local` disk /
+`s3` untuk AWS S3 · OSS · MinIO), dipilih hanya lewat `STORAGE_DRIVER`. Driver
+`local` disajikan via static mount `STORAGE_URL → STORAGE_DIR` di boot
+(`internal/app/app.go`); URL prefix dipisah dari path filesystem agar
+`STORAGE_DIR` absolut tetap valid. Cara ganti backend + caveat migrasi/volume
+persisten: lihat bagian **Penyimpanan & ganti backend** di [`README`](../README.md).
+
 ## Keamanan (ringkas)
 
 Security headers, CSRF (form web; API JWT dikecualikan), rate-limit login per-IP, RBAC `auth → authorize`, bcrypt, JWT HS256 + blacklist logout, cookie `HttpOnly`/`Secure`(prod), secret fail-fast, error generik di production. Detail di [`AGENTS.md`](../AGENTS.md) (Security Checklist).

@@ -5,6 +5,7 @@ package app
 
 import (
 	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
@@ -116,8 +117,11 @@ func Build(c *container.Container) *gin.Engine {
 func mountWebLayer(engine *gin.Engine, cfg *config.Config) {
 	// Static assets (posisi awal). Folder boleh kosong saat dev.
 	engine.Static("/assets", "./web/assets")
-	// File upload (avatar/logo) disajikan dari folder storage lokal.
-	if cfg.Storage.Dir != "" && cfg.Storage.URLBase != "" {
+	// File upload (avatar/logo) disajikan dari folder storage lokal HANYA saat
+	// driver=local. Prefix URL (STORAGE_URL) sengaja DIPISAH dari path filesystem
+	// (STORAGE_DIR) → STORAGE_DIR absolut (mis. /app/storage di Docker) tetap
+	// menghasilkan URL valid. Saat driver=s3, tak ada mount lokal (URL sudah absolut).
+	if !strings.EqualFold(cfg.Storage.Driver, "s3") && cfg.Storage.Dir != "" && cfg.Storage.URLBase != "" {
 		_ = os.MkdirAll(cfg.Storage.Dir, 0o755)
 		engine.Static(cfg.Storage.URLBase, cfg.Storage.Dir)
 	}

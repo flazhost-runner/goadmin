@@ -48,6 +48,53 @@ make module ARGS="--name product"   # scaffold modul baru lengkap
 
 Semua konfigurasi via `.env` (lihat [`.env.example`](.env.example)), dibaca **hanya** lewat `internal/config`. Kunci utama: `APP_MODE`, `DB_TYPE`/`DB_*`, `REDIS_URL`, `SESSION_SECRET`, `JWT_SECRET`, `BCRYPT_ROUNDS`, `CORS_ORIGINS`. Secret **wajib** di production (app berhenti bila kosong).
 
+## Penyimpanan & ganti backend
+
+Upload gambar (logo Setting, avatar Profil/User, media editor) melewati satu
+abstraksi `internal/storage` dengan **3 driver**, dipilih **hanya** lewat
+`STORAGE_DRIVER` di `.env` — tanpa ubah kode/view:
+
+| `STORAGE_DRIVER` | Simpan ke | URL render |
+| --- | --- | --- |
+| `local` (default) | disk (`STORAGE_DIR`, mis. `web/uploads`) | **relatif** `STORAGE_URL/<nama>` (mis. `/uploads/xxxx.jpg`) — disajikan oleh app |
+| `s3` (endpoint AWS S3) | bucket S3 | **absolut** `STORAGE_PUBLIC_URL/<key>` (mis. `https://cdn.example.com/images/xxxx.jpg`) |
+| `s3` (endpoint OSS/MinIO) | bucket OSS/MinIO S3-compatible | **absolut** `STORAGE_PUBLIC_URL/<key>` |
+
+> Aliyun OSS & MinIO diakses lewat driver `s3` yang sama (S3-compatible) —
+> bedakan hanya lewat `STORAGE_ENDPOINT` + `STORAGE_PUBLIC_URL`.
+
+**Cara kerja driver `local`.** Prefix URL (`STORAGE_URL`) **sengaja dipisah** dari
+path filesystem (`STORAGE_DIR`). Saat `driver=local`, app memasang static mount
+`STORAGE_URL → STORAGE_DIR` di boot (lihat `internal/app/app.go`), lalu render
+mengembalikan `STORAGE_URL/<nama>`. Karena keduanya terpisah, `STORAGE_DIR`
+**absolut** (mis. `/app/storage` di Docker) tetap menghasilkan URL yang valid.
+Saat `driver=s3` tak ada mount lokal — URL sudah absolut (public/CDN).
+
+**Ganti backend.** Ubah `STORAGE_DRIVER` (+ isi `STORAGE_ENDPOINT`,
+`STORAGE_BUCKET`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`,
+`STORAGE_PUBLIC_URL`) lalu **restart** app. Tidak ada perubahan kode.
+
+**Caveat migrasi (penting).** Mengganti driver **tidak** memindahkan berkas lama:
+gambar yang sudah ada di disk tidak otomatis pindah ke bucket. Salin isi
+`STORAGE_DIR` ke bucket dengan **mempertahankan key/prefix** (mis. `images/`,
+`editor/`) sebelum switch:
+
+```bash
+# AWS S3
+aws s3 sync web/uploads/ s3://<bucket>/
+# Aliyun OSS
+ossutil cp -r web/uploads/ oss://<bucket>/
+```
+
+**Produksi + driver `local` bersifat ephemeral.** Filesystem kontainer hilang saat
+redeploy/scale → berkas terunggah lenyap dan tidak terbagi antar-replika. Untuk
+`local` di produksi **wajib** pasang **volume persisten** yang di-mount ke
+`STORAGE_DIR` (mis. mount ke `/app/storage` lalu set `STORAGE_DIR=/app/storage`),
+atau — lebih disarankan untuk multi-replika — gunakan driver `s3`.
+
+> Isi folder upload **di-ignore git** (`/web/uploads/*`); folder dipertahankan via
+> `web/uploads/.gitkeep`. Jangan commit berkas yang diunggah user.
+
 ## Struktur
 
 ```

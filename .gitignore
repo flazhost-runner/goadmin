@@ -21,9 +21,12 @@ coverage.html
 *.sqlite
 *.sqlite3
 
-# Cache/unduhan runtime (mis. katalog template) + upload — bukan sumber
+# Cache/unduhan runtime (mis. katalog template) + upload — bukan sumber.
+# Isi folder upload di-ignore, tapi folder-nya dipertahankan via .gitkeep
+# (driver=local menulis ke sini; jangan commit berkas yang diunggah user).
 /web/cache/
-/web/uploads/
+/web/uploads/*
+!/web/uploads/.gitkeep
 /tmp/
 
 # Editor / OS
