@@ -34,15 +34,33 @@ type Container struct {
 }
 
 // New membuat container dengan dependency inti.
-func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *Container {
+//
+// Gagal bila storage object (s3/oss) tak bisa dirakit: lebih baik app menolak start
+// daripada boot "sehat" tapi diam-diam menulis upload ke disk container sehingga file
+// tak pernah sampai ke bucket.
+func New(cfg *config.Config, db *gorm.DB, rdb *redis.Client) (*Container, error) {
+	store, err := storage.New(cfg.Storage)
+	if err != nil {
+		return nil, err
+	}
 	return &Container{
 		Config:   cfg,
 		DB:       db,
 		Redis:    rdb,
 		Mailer:   mail.New(cfg.Mail),
-		Storage:  storage.New(cfg.Storage),
+		Storage:  store,
 		services: map[string]interface{}{},
+	}, nil
+}
+
+// MustNew = New yang panic bila storage gagal dirakit. Untuk test/bootstrap yang
+// memakai storage lokal, di mana kegagalan berarti bug — bukan salah config user.
+func MustNew(cfg *config.Config, db *gorm.DB, rdb *redis.Client) *Container {
+	c, err := New(cfg, db, rdb)
+	if err != nil {
+		panic(err)
 	}
+	return c
 }
 
 // Provide menyimpan implementasi service di bawah token tertentu.

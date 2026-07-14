@@ -16,6 +16,10 @@ import (
 	"goadmin/internal/config"
 )
 
+// defaultMaxOpen dipakai bila DB_CONNECTION_LIMIT tak diisi/0 — 0 pada database/sql
+// berarti TAK TERBATAS, yang akan menguras kuota DB terkelola.
+const defaultMaxOpen = 10
+
 // Open membuka koneksi DB sesuai cfg.DB.Type dan mengonfigurasi pool.
 func Open(cfg *config.Config) (*gorm.DB, error) {
 	dialector, err := dialector(cfg.DB)
@@ -84,17 +88,46 @@ func dialector(db config.DBConfig) (gorm.Dialector, error) {
 	}
 }
 
+// poolLimits menurunkan batas pool PER REPLIKA dari config.
+//
+// Kuota DB terkelola dibagi ke SEMUA replika, jadi DB_CONNECTION_LIMIT harus kira-kira
+// kuota_tier / maks_replika. Dua penjaga di sini:
+//   - limit 0 tidak boleh berarti "tak terbatas" (default database/sql) — itu akan
+//     menguras kuota DB begitu trafik naik;
+//   - idle tak boleh melebihi open (mis. tier kecil limit=2 tapi idle=5), karena
+//     database/sql diam-diam memangkasnya dan config jadi menyesatkan saat dibaca.
+func poolLimits(cfg config.DBConfig) (open, idle int) {
+	open = cfg.ConnMaxOpen
+	if open <= 0 {
+		open = defaultMaxOpen
+	}
+	idle = cfg.ConnMaxIdle
+	if idle > open {
+		idle = open
+	}
+	if idle < 0 {
+		idle = 0
+	}
+	return open, idle
+}
+
 func configurePool(db *gorm.DB, cfg config.DBConfig) error {
 	sqlDB, err := db.DB()
 	if err != nil {
 		return fmt.Errorf("database: gagal ambil *sql.DB: %w", err)
 	}
-	sqlDB.SetMaxOpenConns(cfg.ConnMaxOpen)
-	sqlDB.SetMaxIdleConns(cfg.ConnMaxIdle)
+	open, idle := poolLimits(cfg)
+	sqlDB.SetMaxOpenConns(open)
+	sqlDB.SetMaxIdleConns(idle)
+
 	if cfg.ConnMaxLifetime > 0 {
 		sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 	} else {
 		sqlDB.SetConnMaxLifetime(time.Hour)
+	}
+	// Lepas koneksi nganggur agar kuota bisa berpindah ke replika lain saat auto-scaling.
+	if cfg.ConnMaxIdleTime > 0 {
+		sqlDB.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 	}
 	return nil
 }

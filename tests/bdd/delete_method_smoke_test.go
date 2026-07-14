@@ -58,7 +58,7 @@ func TestDeleteMethodEndToEnd(t *testing.T) {
 	if err := bootstrap.MigrateAndSeed(db, "admin@goadmin.test", "secret123", cfg.Security.BcryptRounds); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	c := container.New(cfg, db, nil)
+	c := container.MustNew(cfg, db, nil)
 
 	// Bungkus engine seperti runtime: MethodOverride SEBELUM routing.
 	handler := middleware.MethodOverride(app.Build(c))
@@ -416,7 +416,7 @@ func TestRolePermissionManagement(t *testing.T) {
 	if err := bootstrap.MigrateAndSeed(db, "admin@goadmin.test", "secret123", cfg.Security.BcryptRounds); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	c := container.New(cfg, db, nil)
+	c := container.MustNew(cfg, db, nil)
 	handler := middleware.MethodOverride(app.Build(c))
 
 	role := model.Role{ID: helpers.NewID(), Name: "Editor", GuardName: "web", Status: model.StatusActive}
@@ -580,7 +580,7 @@ func TestFePreviewFoldedToSetting(t *testing.T) {
 	if err := bootstrap.MigrateAndSeed(db, "admin@goadmin.test", "secret123", cfg.Security.BcryptRounds); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	handler := middleware.MethodOverride(app.Build(container.New(cfg, db, nil)))
+	handler := middleware.MethodOverride(app.Build(container.MustNew(cfg, db, nil)))
 
 	jar := map[string]string{}
 	do := func(method, path string, form url.Values) *httptest.ResponseRecorder {
@@ -698,7 +698,7 @@ func TestAuthResetNamingAndLogout(t *testing.T) {
 	if err := bootstrap.MigrateAndSeed(db, "admin@goadmin.test", "secret123", cfg.Security.BcryptRounds); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	handler := middleware.MethodOverride(app.Build(container.New(cfg, db, nil)))
+	handler := middleware.MethodOverride(app.Build(container.MustNew(cfg, db, nil)))
 
 	jar := map[string]string{}
 	do := func(method, path string, form url.Values) *httptest.ResponseRecorder {
@@ -801,7 +801,7 @@ func TestSettingInlineValidation(t *testing.T) {
 	if err := bootstrap.MigrateAndSeed(db, "admin@goadmin.test", "secret123", cfg.Security.BcryptRounds); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	handler := middleware.MethodOverride(app.Build(container.New(cfg, db, nil)))
+	handler := middleware.MethodOverride(app.Build(container.MustNew(cfg, db, nil)))
 
 	jar := map[string]string{}
 	send := func(req *http.Request) *httptest.ResponseRecorder {
@@ -895,7 +895,7 @@ func TestProfileStructureAndValidation(t *testing.T) {
 	if err := bootstrap.MigrateAndSeed(db, "admin@goadmin.test", "secret123", cfg.Security.BcryptRounds); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	handler := middleware.MethodOverride(app.Build(container.New(cfg, db, nil)))
+	handler := middleware.MethodOverride(app.Build(container.MustNew(cfg, db, nil)))
 
 	jar := map[string]string{}
 	form := func(method, path string, vals url.Values) *httptest.ResponseRecorder {

@@ -57,7 +57,7 @@ func newWorld() (*world, error) {
 	if err := bootstrap.MigrateAndSeed(db, adminEmail, adminPass, cfg.Security.BcryptRounds); err != nil {
 		return nil, err
 	}
-	c := container.New(cfg, db, nil)
+	c := container.MustNew(cfg, db, nil)
 	return &world{engine: app.Build(c), cont: c}, nil
 }
 

@@ -59,9 +59,17 @@ type DBConfig struct {
 	Password        string
 	Database        string
 	Logging         bool
+	// ConnMaxOpen = batas koneksi PER REPLIKA, bukan total. Kuota DB terkelola dibagi
+	// ke SEMUA replika, jadi patokannya: DB_CONNECTION_LIMIT ≈ kuota_tier / maks_replika
+	// (minimal 2). Batas ini tidak membatasi jumlah request: request yang tak kebagian
+	// koneksi antre sebentar, bukan ditolak.
 	ConnMaxOpen     int
 	ConnMaxIdle     int
 	ConnMaxLifetime time.Duration
+	// ConnMaxIdleTime = berapa lama koneksi nganggur boleh dipegang sebelum dilepas.
+	// Penting saat auto-scaling: tanpa ini, replika yang sedang sepi tetap menggenggam
+	// koneksi idle sampai ConnMaxLifetime dan replika baru kehabisan jatah.
+	ConnMaxIdleTime time.Duration
 }
 
 type RedisConfig struct {
@@ -169,6 +177,7 @@ func Load() (*Config, error) {
 			ConnMaxOpen:     v.GetInt("DB_CONNECTION_LIMIT"),
 			ConnMaxIdle:     v.GetInt("DB_CONNECTION_IDLE"),
 			ConnMaxLifetime: time.Duration(v.GetInt("DB_CONNECTION_LIFETIME_MIN")) * time.Minute,
+			ConnMaxIdleTime: time.Duration(v.GetInt("DB_CONNECTION_IDLE_MIN")) * time.Minute,
 		},
 		Redis: RedisConfig{
 			URL: v.GetString("REDIS_URL"),
@@ -234,6 +243,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("DB_CONNECTION_LIMIT", 10)
 	v.SetDefault("DB_CONNECTION_IDLE", 5)
 	v.SetDefault("DB_CONNECTION_LIFETIME_MIN", 60)
+	// Lepas koneksi nganggur setelah 5 menit agar kuota DB bisa berpindah ke replika
+	// lain saat auto-scaling; tanpa ini koneksi idle dipegang sampai satu jam.
+	v.SetDefault("DB_CONNECTION_IDLE_MIN", 5)
 	v.SetDefault("REDIS_URL", "redis://127.0.0.1:6379")
 	v.SetDefault("SESSION_TTL_HOURS", 6)
 	v.SetDefault("JWT_EXPIRES_IN", "1h")

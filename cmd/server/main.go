@@ -52,7 +52,10 @@ func main() {
 
 	rdb := connectRedis(cfg)
 
-	c := container.New(cfg, db, rdb)
+	c, err := container.New(cfg, db, rdb)
+	if err != nil {
+		log.Fatalf("storage: %v", err)
+	}
 	engine := app.Build(c)
 
 	// Permission route-driven: setelah route terdaftar (app.Build mengisi

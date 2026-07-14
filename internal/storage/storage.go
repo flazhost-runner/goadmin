@@ -60,15 +60,24 @@ type Local struct {
 	urlBase string
 }
 
-// New memilih implementasi berdasar Driver: "s3" → S3, selain itu → Local.
-// Bila init S3 gagal (config buruk), fallback ke Local agar app tetap jalan.
-func New(cfg config.StorageConfig) Storage {
-	if strings.EqualFold(cfg.Driver, "s3") {
-		if s, err := NewS3(cfg); err == nil {
-			return s
-		}
+// IsObjectDriver melaporkan apakah Driver menunjuk object storage ("s3" atau "oss"),
+// bukan disk lokal. Dipakai juga oleh app untuk memutuskan mount static /uploads.
+func IsObjectDriver(driver string) bool {
+	return strings.EqualFold(driver, "s3") || strings.EqualFold(driver, "oss")
+}
+
+// New memilih implementasi berdasar Driver: "s3"/"oss" → S3-compatible, "local" → disk.
+//
+// Mengembalikan error bila driver object storage gagal dirakit. DULU fungsi ini diam-diam
+// fallback ke Local saat init gagal — dan "oss" bahkan tak dikenali sama sekali, sehingga
+// STORAGE_DRIVER=oss menulis file ke disk container: upload seolah sukses tapi tak pernah
+// sampai ke bucket, lalu hilang saat container restart / tak terlihat oleh replika lain.
+// Salah konfigurasi harus berisik, bukan menyamar jadi "berhasil".
+func New(cfg config.StorageConfig) (Storage, error) {
+	if IsObjectDriver(cfg.Driver) {
+		return NewS3(cfg)
 	}
-	return NewLocal(cfg)
+	return NewLocal(cfg), nil
 }
 
 // NewLocal merakit storage lokal dari config.

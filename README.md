@@ -57,18 +57,22 @@ abstraksi `internal/storage` dengan **3 driver**, dipilih **hanya** lewat
 | `STORAGE_DRIVER` | Simpan ke | URL render |
 | --- | --- | --- |
 | `local` (default) | disk (`STORAGE_DIR`, mis. `web/uploads`) | **relatif** `STORAGE_URL/<nama>` (mis. `/uploads/xxxx.jpg`) — disajikan oleh app |
-| `s3` (endpoint AWS S3) | bucket S3 | **absolut** `STORAGE_PUBLIC_URL/<key>` (mis. `https://cdn.example.com/images/xxxx.jpg`) |
-| `s3` (endpoint OSS/MinIO) | bucket OSS/MinIO S3-compatible | **absolut** `STORAGE_PUBLIC_URL/<key>` |
+| `oss` | bucket Aliyun OSS | **absolut**; default `https://<bucket>.<endpoint>/<key>` (virtual-hosted) |
+| `s3` | bucket AWS S3 / MinIO / R2 (S3-compatible) | **absolut**; default `https://<endpoint>/<bucket>/<key>` (path-style) |
 
-> Aliyun OSS & MinIO diakses lewat driver `s3` yang sama (S3-compatible) —
-> bedakan hanya lewat `STORAGE_ENDPOINT` + `STORAGE_PUBLIC_URL`.
+> `STORAGE_PUBLIC_URL` menimpa URL default di atas (mis. saat pakai CDN).
+> `STORAGE_ENDPOINT` boleh ditulis dengan atau tanpa skema — `https://` otomatis dilucuti.
+>
+> **Config object storage yang tak lengkap membuat app menolak start.** Ini disengaja:
+> dulu init gagal ditelan diam-diam dan app jatuh ke disk lokal, sehingga upload tampak
+> berhasil padahal tak pernah sampai ke bucket dan hilang saat container restart.
 
 **Cara kerja driver `local`.** Prefix URL (`STORAGE_URL`) **sengaja dipisah** dari
 path filesystem (`STORAGE_DIR`). Saat `driver=local`, app memasang static mount
 `STORAGE_URL → STORAGE_DIR` di boot (lihat `internal/app/app.go`), lalu render
 mengembalikan `STORAGE_URL/<nama>`. Karena keduanya terpisah, `STORAGE_DIR`
 **absolut** (mis. `/app/storage` di Docker) tetap menghasilkan URL yang valid.
-Saat `driver=s3` tak ada mount lokal — URL sudah absolut (public/CDN).
+Saat `driver=oss`/`s3` tak ada mount lokal — URL sudah absolut (public/CDN).
 
 **Ganti backend.** Ubah `STORAGE_DRIVER` (+ isi `STORAGE_ENDPOINT`,
 `STORAGE_BUCKET`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`,

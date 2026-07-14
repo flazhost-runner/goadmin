@@ -46,7 +46,7 @@ func NewContainer(t *testing.T, mode config.AppMode) *container.Container {
 	t.Helper()
 	cfg := TestConfig(mode)
 	db := NewDB(t)
-	return container.New(cfg, db, nil)
+	return container.MustNew(cfg, db, nil)
 }
 
 // SeedAdmin menyemai admin default + RBAC, mengembalikan kredensial login.

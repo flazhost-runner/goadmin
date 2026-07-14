@@ -95,17 +95,28 @@ func TestStorage_SanitizeImage(t *testing.T) {
 	}
 }
 
-// New memilih driver dari config (tanpa jaringan): local → *Local, s3 → *S3.
+// New memilih driver dari config (tanpa jaringan): local → *Local, s3/oss → *S3.
 func TestStorage_DriverSelection(t *testing.T) {
-	if _, ok := storage.New(config.StorageConfig{Driver: "local"}).(*storage.Local); !ok {
+	local, err := storage.New(config.StorageConfig{Driver: "local"})
+	if err != nil {
+		t.Fatalf("driver local tidak boleh error: %v", err)
+	}
+	if _, ok := local.(*storage.Local); !ok {
 		t.Fatal("driver local harus → *Local")
 	}
-	s3cfg := config.StorageConfig{
-		Driver: "s3", S3Endpoint: "s3.example.com", S3Bucket: "bucket",
-		S3AccessKey: "k", S3SecretKey: "s", S3PublicURL: "https://cdn.example.com",
-	}
-	if _, ok := storage.New(s3cfg).(*storage.S3); !ok {
-		t.Fatal("driver s3 harus → *S3")
+
+	for _, driver := range []string{"s3", "oss"} {
+		cfg := config.StorageConfig{
+			Driver: driver, S3Endpoint: "s3.example.com", S3Bucket: "bucket",
+			S3AccessKey: "k", S3SecretKey: "s", S3PublicURL: "https://cdn.example.com",
+		}
+		store, err := storage.New(cfg)
+		if err != nil {
+			t.Fatalf("driver %s tidak boleh error: %v", driver, err)
+		}
+		if _, ok := store.(*storage.S3); !ok {
+			t.Fatalf("driver %s harus → *S3, dapat %T", driver, store)
+		}
 	}
 }
 

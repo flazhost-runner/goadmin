@@ -5,7 +5,6 @@ package app
 
 import (
 	"os"
-	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
@@ -22,6 +21,7 @@ import (
 	settingsvc "goadmin/internal/modules/setting/service"
 	"goadmin/internal/modules/setting/theme"
 	"goadmin/internal/router"
+	"goadmin/internal/storage"
 	"goadmin/internal/view"
 )
 
@@ -121,7 +121,9 @@ func mountWebLayer(engine *gin.Engine, cfg *config.Config) {
 	// driver=local. Prefix URL (STORAGE_URL) sengaja DIPISAH dari path filesystem
 	// (STORAGE_DIR) → STORAGE_DIR absolut (mis. /app/storage di Docker) tetap
 	// menghasilkan URL valid. Saat driver=s3, tak ada mount lokal (URL sudah absolut).
-	if !strings.EqualFold(cfg.Storage.Driver, "s3") && cfg.Storage.Dir != "" && cfg.Storage.URLBase != "" {
+	// Cek driver object (s3 DAN oss) — dulu hanya "s3" yang dikecualikan, sehingga
+	// driver "oss" ikut memasang mount lokal seolah file ada di disk.
+	if !storage.IsObjectDriver(cfg.Storage.Driver) && cfg.Storage.Dir != "" && cfg.Storage.URLBase != "" {
 		_ = os.MkdirAll(cfg.Storage.Dir, 0o755)
 		engine.Static(cfg.Storage.URLBase, cfg.Storage.Dir)
 	}
